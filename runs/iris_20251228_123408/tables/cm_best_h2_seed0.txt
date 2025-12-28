@@ -1,0 +1,6 @@
+Confusion matrix
+Classes: setosa, versicolor, virginica
+
+[[10  0  0]
+ [ 0 10  0]
+ [ 0  0 10]]

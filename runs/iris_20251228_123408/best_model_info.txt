@@ -1,0 +1,3 @@
+Best hidden size by mean accuracy: H=2
+Best mean accuracy (MLP): 0.980000
+Linear mean accuracy: 0.973333

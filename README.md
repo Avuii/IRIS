@@ -67,8 +67,6 @@ Tested hidden sizes:
 
 ---
 
-## 📈 Visualizations
-
 ## 📊 Visualizations
 
 ### Accuracy vs hidden size (H)

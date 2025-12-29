@@ -128,6 +128,6 @@ Outputs will be saved under:
 
 ---
 
-###🧑‍💻 Author
+### 🧑‍💻 Author
  
 Created by Avuii  

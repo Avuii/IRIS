@@ -122,9 +122,9 @@ Example:
 Install dependencies:   
 `pip install numpy torch matplotlib scikit-learn`  
 Run:   
-`python main.py`
-Outputs will be saved under:   
-`runs/iris_<timestamp>/`
+`python main.py`  
+Outputs will be saved under:     
+`runs/iris_<timestamp>/`  
 
 ---
 

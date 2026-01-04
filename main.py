@@ -1,22 +1,19 @@
 import os
 import json
 from datetime import datetime
-
 import numpy as np
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
-
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 
-
-# =========================================================
+# ======================================================================================================================
 # RUN / SAVE UTILS
-# =========================================================
+# ======================================================================================================================
 def init_run(output_root="runs", run_name_prefix="iris"):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = os.path.join(output_root, f"{run_name_prefix}_{ts}")
@@ -55,10 +52,9 @@ def save_model_state(run, model, filename="best_model.pt"):
     torch.save(model.state_dict(), path)
     return path
 
-
-# =========================================================
+# ======================================================================================================================
 # Utils
-# =========================================================
+# ======================================================================================================================
 def set_seed(seed: int):
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -100,10 +96,9 @@ def eval_loader(model, loader):
     acc = accuracy_score(y_true, y_pred)
     return avg_loss, acc, y_true, y_pred
 
-
-# =========================================================
-# Training with history (for learning curves)
-# =========================================================
+# ======================================================================================================================
+# Training with history
+# ======================================================================================================================
 def train_with_history(model, train_loader, test_loader, epochs=200, lr=0.05):
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.CrossEntropyLoss()
@@ -130,9 +125,9 @@ def train_with_history(model, train_loader, test_loader, epochs=200, lr=0.05):
     return hist
 
 
-# =========================================================
-# Plots (save to file)
-# =========================================================
+# ======================================================================================================================
+# Plots
+# ======================================================================================================================
 def plot_acc_vs_hidden(hidden_sizes, acc_by_h, out_path):
     hs = np.array(hidden_sizes, dtype=float)
     means = np.array([mean_std(acc_by_h[h])[0] for h in hidden_sizes])
@@ -203,9 +198,9 @@ def save_cm_txt(run, cm: np.ndarray, class_names, filename):
     return path
 
 
-# =========================================================
-# Optional WOW: PCA decision regions (train a 2D classifier on PCA space)
-# =========================================================
+# ======================================================================================================================
+#PCA decision regions (train a 2D classifier on PCA space)
+# ======================================================================================================================
 def plot_pca_decision_regions(model_factory, hidden=None, seed=0, out_path="iris_pca_decision_regions.png"):
     set_seed(seed)
 
@@ -254,10 +249,9 @@ def plot_pca_decision_regions(model_factory, hidden=None, seed=0, out_path="iris
     plt.savefig(out_path)
     plt.close()
 
-
-# =========================================================
+# ======================================================================================================================
 # Models
-# =========================================================
+# ======================================================================================================================
 class LinearSoftmax(nn.Module):
     def __init__(self, in_dim=4, out_dim=3):
         super().__init__()
@@ -282,9 +276,9 @@ def model_factory(in_dim, out_dim, hidden=None):
     return MLP(in_dim=in_dim, hidden=hidden, out_dim=out_dim)
 
 
-# =========================================================
+# ======================================================================================================================
 # Data loaders
-# =========================================================
+# ======================================================================================================================
 def make_loaders(seed, test_size=0.2, batch_size=16):
     iris = load_iris()
     X = iris.data.astype(np.float32)
@@ -312,11 +306,11 @@ def make_loaders(seed, test_size=0.2, batch_size=16):
     return train_loader, test_loader, X_test, y_test, iris.target_names.tolist()
 
 
-# =========================================================
-# MAIN EXPERIMENT
-# =========================================================
+# ======================================================================================================================
+# MAIN
+# ======================================================================================================================
 def main():
-    # --- config (to zapisze się do config.json)
+    #config.json
     config = {
         "test_size": 0.2,
         "seeds": [0, 1, 2, 3, 4],
@@ -334,24 +328,19 @@ def main():
     seeds = config["seeds"]
     hidden_sizes = config["hidden_sizes"]
 
-    # zbieramy acc po seedach
     acc_linear = []
     acc_by_h = {h: [] for h in hidden_sizes}
 
-    # learning curves tylko z seeda=0 dla 3 modeli
     histories = {}
 
-    # confusion matrices seed=0
     cm_linear_seed0 = None
     cm_best_seed0 = None
     best_h = None
 
-    # do wyboru najlepszego H po mean accuracy
-    # (trzymamy też model z seeda 0 dla najlepszego H żeby ewentualnie zapisać wagi)
     best_mean = -1.0
     best_model_seed0 = None
 
-    # per-seed tabela (fajna do aneksu)
+    # per-seed tabela
     per_seed_rows = []
 
     for seed in seeds:
@@ -360,7 +349,7 @@ def main():
             seed, test_size=config["test_size"], batch_size=config["batch_size"]
         )
 
-        # ---- baseline linear
+        #baseline linear
         lin = LinearSoftmax(in_dim=4, out_dim=3)
         hist_lin = train_with_history(lin, train_loader, test_loader, epochs=config["epochs"], lr=config["lr"])
         _, acc, _, y_pred = eval_loader(lin, test_loader)
@@ -371,7 +360,7 @@ def main():
             histories["linear"] = hist_lin
             cm_linear_seed0 = confusion_matrix(y_test_np, y_pred)
 
-        # ---- MLP for each H
+        #MLP for each H
         for h in hidden_sizes:
             mlp = MLP(in_dim=4, hidden=h, out_dim=3)
             hist = train_with_history(mlp, train_loader, test_loader, epochs=config["epochs"], lr=config["lr"])
@@ -380,14 +369,10 @@ def main():
             acc_by_h[h].append(acc)
             per_seed_rows.append(["mlp", h, seed, acc])
 
-            # learning curves tylko dla seed=0 i H=8,32 (jak chciałaś)
+            # learning curves tylko dla seed=0 i H=8,32
             if seed == 0 and h in (8, 32):
                 histories[f"mlp_h={h}"] = hist
-
-            # żeby mieć CM dla najlepszego H (po średniej) zapisujemy na końcu,
-            # ale tu zapamiętamy model seed=0, bo CM ma być seed=0
             if seed == 0:
-                # chwilowo tylko kandydaci; finalny best wybierzemy po mean po seedach
                 pass
 
     # wybór najlepszego H po mean accuracy
@@ -407,7 +392,7 @@ def main():
     _, _, _, y_pred_best = eval_loader(best_model_seed0, test_loader)
     cm_best_seed0 = confusion_matrix(y_test_np, y_pred_best)
 
-    # --- zapis tabel
+    # zapis tabel
     # summary mean/std
     summary_rows = []
     summary_rows.append(["linear", "", np.mean(acc_linear), np.std(acc_linear)])
@@ -417,7 +402,7 @@ def main():
     save_csv(run, ["model", "H", "acc_mean", "acc_std"], summary_rows, filename="results_summary.csv")
     save_csv(run, ["model", "H", "seed", "acc_test"], per_seed_rows, filename="results_per_seed.csv")
 
-    # --- zapis wykresów (4 rysunki)
+    #zapis wykresów
     plot_acc_vs_hidden(hidden_sizes, acc_by_h, out_path=os.path.join(run["figs"], "acc_vs_hidden.png"))
     plot_boxplot_acc(hidden_sizes, acc_by_h, out_path=os.path.join(run["figs"], "boxplot_acc_vs_hidden.png"))
     plot_learning_curves(histories, out_path=os.path.join(run["figs"], "learning_curves_loss.png"))
@@ -436,7 +421,7 @@ def main():
     )
     save_cm_txt(run, cm_best_seed0, class_names, filename=f"cm_best_h{best_h}_seed0.txt")
 
-    # --- zapis informacji o best + model weights
+    #zapis informacji o best, model weights
     save_text(
         run,
         text=(
@@ -448,7 +433,7 @@ def main():
     )
     save_model_state(run, best_model_seed0, filename=f"best_model_mlp_h{best_h}_seed0.pt")
 
-    # --- opcjonalny WOW (PCA decision regions)
+    # PCA decision regions
     plot_pca_decision_regions(
         model_factory,
         hidden=best_h,
